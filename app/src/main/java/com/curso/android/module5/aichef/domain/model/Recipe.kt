@@ -28,6 +28,7 @@ data class Recipe(
     val steps: List<String> = emptyList(),
     val imageUri: String = "",
     val generatedImageUrl: String = "",
+    val isFavorite: Boolean = false,
     val createdAt: Long = System.currentTimeMillis()
 ) {
     /**
@@ -45,6 +46,7 @@ data class Recipe(
         "steps" to steps,
         "imageUri" to imageUri,
         "generatedImageUrl" to generatedImageUrl,
+        "isFavorite" to isFavorite,
         "createdAt" to createdAt
     )
 
@@ -66,6 +68,9 @@ data class Recipe(
                 steps = (data["steps"] as? List<*>)?.filterIsInstance<String>() ?: emptyList(),
                 imageUri = data["imageUri"] as? String ?: "",
                 generatedImageUrl = data["generatedImageUrl"] as? String ?: "",
+
+                isFavorite = data["isFavorite"] as? Boolean ?: false, // <-- LEÍDO DE FIRESTORE
+
                 createdAt = (data["createdAt"] as? Long) ?: System.currentTimeMillis()
             )
         }

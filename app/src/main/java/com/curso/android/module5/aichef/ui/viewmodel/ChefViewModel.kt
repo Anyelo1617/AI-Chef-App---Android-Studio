@@ -23,6 +23,10 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+//Nuevos Imports
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+
 /**
  * =============================================================================
  * ChefViewModel - ViewModel principal de la aplicación
@@ -98,6 +102,12 @@ class ChefViewModel @Inject constructor(
     // LISTA DE RECETAS
     // =========================================================================
 
+    // Estado para controlar si vemos todas o solo favoritas
+    private val _showOnlyFavorites = MutableStateFlow(false)
+    val showOnlyFavorites: StateFlow<Boolean> = _showOnlyFavorites.asStateFlow()
+
+
+
     /**
      * Lista de recetas del usuario autenticado
      *
@@ -107,20 +117,31 @@ class ChefViewModel @Inject constructor(
      *
      * Si el usuario no está autenticado, emitimos lista vacía.
      */
-    val recipes: StateFlow<List<Recipe>> = authState
-        .flatMapLatest { state ->
-            when (state) {
-                is AuthState.Authenticated -> {
-                    firestoreRepository.observeUserRecipes(state.userId)
+
+    /**
+     * Lista de recetas combinada con el filtro de favoritos
+     */
+
+    val recipes: StateFlow<List<Recipe>> = combine(
+        authState,
+        _showOnlyFavorites
+    ) { state, showFavorites ->
+        Pair(state, showFavorites)
+    }.flatMapLatest { (state, showFavorites) ->
+        when (state) {
+            is AuthState.Authenticated -> {
+                firestoreRepository.observeUserRecipes(state.userId).map { list ->
+                    // Filtramos la lista si el switch está activado
+                    if (showFavorites) list.filter { it.isFavorite } else list
                 }
-                else -> flowOf(emptyList())
             }
+            else -> flowOf(emptyList())
         }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
-        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
 
     // =========================================================================
     // ESTADO DE GENERACIÓN DE RECETAS
@@ -275,6 +296,23 @@ class ChefViewModel @Inject constructor(
     // =========================================================================
     // ACCIONES DE RECETAS
     // =========================================================================
+
+    /**
+     * Alterna el filtro de ver todas vs solo favoritas
+     */
+    fun toggleFavoriteFilter() {
+        _showOnlyFavorites.value = !_showOnlyFavorites.value
+    }
+
+    /**
+     * Cambia el estado de favorito de una receta en Firestore
+     */
+    fun toggleFavorite(recipeId: String, currentStatus: Boolean) {
+        viewModelScope.launch {
+            // Mandamos lo contrario al estado actual (si era false, mandamos true)
+            firestoreRepository.toggleFavorite(recipeId, !currentStatus)
+        }
+    }
 
     /**
      * Elimina una receta
