@@ -127,6 +127,7 @@ fun RecipeDetailScreen(
     viewModel: ChefViewModel,
     recipeId: String,
     onNavigateBack: () -> Unit
+
 ) {
     // =========================================================================
     // OBSERVACIÓN DE ESTADOS
@@ -167,7 +168,9 @@ fun RecipeDetailScreen(
     val context = LocalContext.current // contexto para compartir
 
     // Instancias para la captura de pantalla nativa
-    val graphicsLayer = rememberGraphicsLayer()
+    val layerImage = rememberGraphicsLayer()
+    val layerIngredients = rememberGraphicsLayer()
+    val layerSteps = rememberGraphicsLayer()
     val coroutineScope = rememberCoroutineScope()
 
     Scaffold(
@@ -196,9 +199,12 @@ fun RecipeDetailScreen(
                                 coroutineScope.launch {
                                     try {
                                         //Convertimos la capa grabada a Bitmap
-                                        val bitmap = graphicsLayer.toImageBitmap().asAndroidBitmap()
-                                        //Pasamos el Bitmap real a la utilidad
-                                        ShareUtils.shareRecipe(context, recipe, bitmap)
+                                        val bitmaps = listOf(
+                                                layerImage.toImageBitmap().asAndroidBitmap(),
+                                        layerIngredients.toImageBitmap().asAndroidBitmap(),
+                                        layerSteps.toImageBitmap().asAndroidBitmap()
+                                        )
+                                        ShareUtils.shareRecipe(context, recipe, bitmaps) //bitmap(s)
                                     }
                                     catch (e: Exception) {
                                         e.printStackTrace() // Aquí podrías poner un Snackbar/Toast
@@ -243,38 +249,48 @@ fun RecipeDetailScreen(
                     .padding(paddingValues)
                     .verticalScroll(rememberScrollState())
                     .padding(16.dp)
-
-                    // Grabamos el contenido visual de esta columna
-                    .drawWithContent {
-                        graphicsLayer.record {
-                            this@drawWithContent.drawContent()
-                        }
-                        drawContent() //Seguimos dibujando en pantalla normalmente
-                    }
             ) {
+                // Box para la IMAGEN
                 // Sección de imagen generada por IA con cache
-                RecipeImageSection(
-                    imageState = imageState,
-                    recipeTitle = recipe.title,
-                    onRetry = {
-                        viewModel.generateRecipeImage(
-                            recipeId = recipe.id,
-                            existingImageUrl = "", // Forzar regeneración
-                            recipeTitle = recipe.title,
-                            ingredients = recipe.ingredients
-                        )
-                    }
-                )
+                Box(modifier = Modifier.drawWithContent {
+                    layerImage.record { this@drawWithContent.drawContent() }
+                    drawContent()
+                }) {
+                    RecipeImageSection(
+                        imageState = imageState,
+                        recipeTitle = recipe.title,
+                        onRetry = {
+                            viewModel.generateRecipeImage(
+                                recipeId = recipe.id,
+                                existingImageUrl = "",
+                                recipeTitle = recipe.title,
+                                ingredients = recipe.ingredients
+                            )
+                        }
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(24.dp))
 
+                // Box para los INGREDIENTES
                 // Sección de ingredientes
-                IngredientsSection(ingredients = recipe.ingredients)
+                Box(modifier = Modifier.drawWithContent {
+                    layerIngredients.record { this@drawWithContent.drawContent() }
+                    drawContent()
+                }) {
+                    IngredientsSection(ingredients = recipe.ingredients)
+                }
 
                 Spacer(modifier = Modifier.height(24.dp))
 
+                // Box para la PREPARACIÓN
                 // Sección de pasos de preparación
-                StepsSection(steps = recipe.steps)
+                Box(modifier = Modifier.drawWithContent {
+                    layerSteps.record { this@drawWithContent.drawContent() }
+                    drawContent()
+                }) {
+                    StepsSection(steps = recipe.steps)
+                }
 
                 Spacer(modifier = Modifier.height(16.dp))
             }

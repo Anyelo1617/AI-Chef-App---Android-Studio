@@ -3,31 +3,33 @@ package com.curso.android.module5.aichef.util
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
+import android.net.Uri // IMPORTANTE: No olvides esta importación
 import androidx.core.content.FileProvider
 import com.curso.android.module5.aichef.domain.model.Recipe
 import java.io.File
 import java.io.FileOutputStream
 
 object ShareUtils {
-
-    fun shareRecipe(context: Context, recipe: Recipe, bitmap: Bitmap) {
+    fun shareRecipe(context: Context, recipe: Recipe, bitmaps: List<Bitmap>) {
         try {
-            //Guarda el bitmap en caché temporal
-            val cachePath = File(context.cacheDir, "images")
-            cachePath.mkdirs()
-            val file = File(cachePath, "shared_recipe.png")
-            val stream = FileOutputStream(file)
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
-            stream.close()
+            val cachePath = File(context.cacheDir, "images").apply { mkdirs() }
+            val uris = arrayListOf<Uri>()
 
-            //Obtenemos URI segura con el FileProvider
-            val uri = FileProvider.getUriForFile(
-                context,
-                "${context.packageName}.fileprovider",
-                file
-            )
+            // Guardamos cada una de las 3 partes
+            bitmaps.forEachIndexed { index, bitmap ->
+                val file = File(cachePath, "recipe_part_$index.png")
+                FileOutputStream(file).use { stream ->
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
+                }
+                val uri = FileProvider.getUriForFile(
+                    context,
+                    "${context.packageName}.fileprovider",
+                    file
+                )
+                uris.add(uri)
+            }
 
-            // Construimos el texto completo de la receta con formato para WhatsApp
+            // Construimos el texto enriquecido para WhatsApp
             val fullRecipeText = buildString {
                 appendLine("🍳 *${recipe.title}*")
                 appendLine()
@@ -42,11 +44,12 @@ object ShareUtils {
                 appendLine("✨ Generado por AI Chef App")
             }
 
-            // Lanzamos el Intento de compartir
+            //  Configuramos el Intent para enviar múltiples archivos y el texto
             val shareIntent = Intent().apply {
-                action = Intent.ACTION_SEND
-                putExtra(Intent.EXTRA_STREAM, uri)
-                putExtra(Intent.EXTRA_TEXT, fullRecipeText) // Pasamos todo el texto acá
+                action = Intent.ACTION_SEND_MULTIPLE
+                putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris)
+                // IMPORTANTE: Aquí pasamos el 'fullRecipeText' que construimos arriba
+                putExtra(Intent.EXTRA_TEXT, fullRecipeText)
                 type = "image/png"
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
