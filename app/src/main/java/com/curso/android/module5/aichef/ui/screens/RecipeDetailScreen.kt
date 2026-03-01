@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
@@ -192,22 +193,35 @@ fun RecipeDetailScreen(
                 },
                 //New Section
                 actions = {
-                    if(recipe != null) {
+                    if (recipe != null) {
+                        // --- BOTÓN DE BORRAR ---
                         IconButton(
                             onClick = {
-                                //Capturamos el nodo en una corrutina
+                                // Llamamos al borrado y regresamos a la lista
+                                viewModel.deleteRecipe(recipe.id)
+                                onNavigateBack()
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Borrar receta",
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
+
+                        // --- BOTÓN DE COMPARTIR ---
+                        IconButton(
+                            onClick = {
                                 coroutineScope.launch {
                                     try {
-                                        //Convertimos la capa grabada a Bitmap
                                         val bitmaps = listOf(
-                                                layerImage.toImageBitmap().asAndroidBitmap(),
-                                        layerIngredients.toImageBitmap().asAndroidBitmap(),
-                                        layerSteps.toImageBitmap().asAndroidBitmap()
+                                            layerImage.toImageBitmap().asAndroidBitmap(),
+                                            layerIngredients.toImageBitmap().asAndroidBitmap(),
+                                            layerSteps.toImageBitmap().asAndroidBitmap()
                                         )
-                                        ShareUtils.shareRecipe(context, recipe, bitmaps) //bitmap(s)
-                                    }
-                                    catch (e: Exception) {
-                                        e.printStackTrace() // Aquí podrías poner un Snackbar/Toast
+                                        ShareUtils.shareRecipe(context, recipe, bitmaps)
+                                    } catch (e: Exception) {
+                                        e.printStackTrace()
                                     }
                                 }
                             }
