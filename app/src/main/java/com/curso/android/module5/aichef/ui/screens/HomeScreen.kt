@@ -15,6 +15,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.RestaurantMenu
 import androidx.compose.material3.Card
@@ -23,6 +25,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -72,6 +75,9 @@ fun HomeScreen(
     // Observar lista de recetas
     val recipes by viewModel.recipes.collectAsStateWithLifecycle()
 
+    // Observamos si el switch de favoritos está activo NUEVO
+    val showOnlyFavorites by viewModel.showOnlyFavorites.collectAsStateWithLifecycle()
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -81,6 +87,16 @@ fun HomeScreen(
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 ),
                 actions = {
+                    IconToggleButton(
+                        checked = showOnlyFavorites,
+                        onCheckedChange = { viewModel.toggleFavoriteFilter() }
+                    ) {
+                        Icon(
+                            imageVector = if (showOnlyFavorites) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                            contentDescription = "Filtrar favoritos",
+                            tint = if (showOnlyFavorites) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
                     IconButton(
                         onClick = {
                             viewModel.signOut()
@@ -129,7 +145,10 @@ fun HomeScreen(
                 ) { recipe ->
                     RecipeCard(
                         recipe = recipe,
-                        onClick = { onNavigateToDetail(recipe.id) }
+                        onClick = { onNavigateToDetail(recipe.id) },
+                        onFavoriteClick = { currentStatus ->
+                            viewModel.toggleFavorite(recipe.id, currentStatus)
+                        }
                     )
                 }
             }
@@ -144,7 +163,8 @@ fun HomeScreen(
 @Composable
 private fun RecipeCard(
     recipe: Recipe,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onFavoriteClick: (Boolean) -> Unit //NUEVO PARÁMETRO
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -184,6 +204,15 @@ private fun RecipeCard(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+
+                    // BOTÓN DE CORAZÓN EN LA TARJETA
+                    IconButton(onClick = { onFavoriteClick(recipe.isFavorite) }) {
+                        Icon(
+                            imageVector = if (recipe.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                            contentDescription = "Marcar como favorito",
+                            tint = if (recipe.isFavorite) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
 
@@ -212,19 +241,24 @@ private fun RecipeCard(
 
 /**
  * Estado cuando no hay recetas
+ * o no hay favoritos
  */
 @Composable
-private fun EmptyRecipesState(modifier: Modifier = Modifier) {
+private fun EmptyRecipesState(
+        modifier: Modifier = Modifier,
+        isFilteringFavorites: Boolean = false
+){
     Box(
         modifier = modifier,
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
             Icon(
-                imageVector = Icons.Default.Restaurant,
+                // Ícono dinámico dependiendo del filtro
+                imageVector = if (isFilteringFavorites) Icons.Default.FavoriteBorder else Icons.Default.Restaurant,
                 contentDescription = null,
                 modifier = Modifier.size(80.dp),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
@@ -233,7 +267,7 @@ private fun EmptyRecipesState(modifier: Modifier = Modifier) {
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "No tienes recetas guardadas",
+                text = if (isFilteringFavorites) "No tienes favoritos aún" else "No tienes recetas guardadas",
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -241,7 +275,7 @@ private fun EmptyRecipesState(modifier: Modifier = Modifier) {
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "¡Presiona + para generar tu primera receta!",
+                text = if (isFilteringFavorites) "Puedes marcar con un corazón tus recetas favoritas :)" else "¡Presiona + para generar tu primera receta!",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
             )

@@ -101,7 +101,7 @@ class FirestoreRepository @javax.inject.Inject constructor() : IFirestoreReposit
                 try {
                     val data = document.data ?: return@mapNotNull null
                     Recipe.fromFirestore(document.id, data)
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     null // Ignorar documentos malformados
                 }
             } ?: emptyList()
@@ -153,7 +153,7 @@ class FirestoreRepository @javax.inject.Inject constructor() : IFirestoreReposit
             } else {
                 null
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }
