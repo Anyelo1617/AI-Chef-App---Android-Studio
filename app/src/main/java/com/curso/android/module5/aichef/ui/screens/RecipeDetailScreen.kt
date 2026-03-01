@@ -19,6 +19,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
@@ -41,6 +43,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.layout.ContentScale
@@ -194,6 +197,19 @@ fun RecipeDetailScreen(
                 //New Section
                 actions = {
                     if (recipe != null) {
+                        // --- BOTÓN DE FAVORITO ---
+                        IconButton(
+                            onClick = {
+                                viewModel.toggleFavorite(recipe.id, recipe.isFavorite)
+                            }
+                        ) {
+                            Icon(
+                                imageVector = if (recipe.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                contentDescription = "Favorito",
+                                tint = if (recipe.isFavorite) Color.Red else MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+
                         // --- BOTÓN DE BORRAR ---
                         IconButton(
                             onClick = {
