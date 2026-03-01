@@ -124,12 +124,25 @@ fun HomeScreen(
         }
     ) { paddingValues ->
         if (recipes.isEmpty()) {
-            // Estado vacío
-            EmptyRecipesState(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-            )
+            if (showOnlyFavorites) {
+                // Mensaje cuando el filtro de favoritos está activo pero no hay ninguno
+                Box(
+                    modifier = Modifier.fillMaxSize().padding(paddingValues),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "No tienes recetas agregadas a favoritos.",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            } else {
+                // Estado vacío original (cuando no hay recetas aun)
+                EmptyRecipesState(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                )
+            }
         } else {
             // Lista de recetas
             LazyColumn(

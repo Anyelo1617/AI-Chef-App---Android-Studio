@@ -35,9 +35,13 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -47,6 +51,7 @@ import coil.compose.AsyncImage
 import com.curso.android.module5.aichef.domain.model.UiState
 import com.curso.android.module5.aichef.ui.viewmodel.ChefViewModel
 import com.curso.android.module5.aichef.util.ShareUtils
+import kotlinx.coroutines.launch
 
 /**
  * =============================================================================
@@ -161,6 +166,10 @@ fun RecipeDetailScreen(
 
     val context = LocalContext.current // contexto para compartir
 
+    // Instancias para la captura de pantalla nativa
+    val graphicsLayer = rememberGraphicsLayer()
+    val coroutineScope = rememberCoroutineScope()
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -180,13 +189,21 @@ fun RecipeDetailScreen(
                 },
                 //New Section
                 actions = {
-                    // Solo mostramos el botón si la receta cargó correctamente
-                    if (recipe != null) {
+                    if(recipe != null) {
                         IconButton(
                             onClick = {
-                                // Llamamos a nuestra función visual
-                                // Pasamos null a la imagen por ahora para que solo comparta el texto con el diseño.
-                                ShareUtils.shareRecipe(context, recipe, null)
+                                //Capturamos el nodo en una corrutina
+                                coroutineScope.launch {
+                                    try {
+                                        //Convertimos la capa grabada a Bitmap
+                                        val bitmap = graphicsLayer.toImageBitmap().asAndroidBitmap()
+                                        //Pasamos el Bitmap real a la utilidad
+                                        ShareUtils.shareRecipe(context, recipe, bitmap)
+                                    }
+                                    catch (e: Exception) {
+                                        e.printStackTrace() // Aquí podrías poner un Snackbar/Toast
+                                    }
+                                }
                             }
                         ) {
                             Icon(
@@ -226,6 +243,14 @@ fun RecipeDetailScreen(
                     .padding(paddingValues)
                     .verticalScroll(rememberScrollState())
                     .padding(16.dp)
+
+                    // Grabamos el contenido visual de esta columna
+                    .drawWithContent {
+                        graphicsLayer.record {
+                            this@drawWithContent.drawContent()
+                        }
+                        drawContent() //Seguimos dibujando en pantalla normalmente
+                    }
             ) {
                 // Sección de imagen generada por IA con cache
                 RecipeImageSection(

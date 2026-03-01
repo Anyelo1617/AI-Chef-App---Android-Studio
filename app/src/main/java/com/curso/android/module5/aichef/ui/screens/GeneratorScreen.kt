@@ -337,7 +337,7 @@ private fun ImagePreviewBox(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Toca para seleccionar una foto",
+                        text = "Selecciona una foto para proceder...",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                     )
