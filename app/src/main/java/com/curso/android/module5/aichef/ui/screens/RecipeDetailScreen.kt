@@ -19,6 +19,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -38,12 +39,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.curso.android.module5.aichef.domain.model.UiState
 import com.curso.android.module5.aichef.ui.viewmodel.ChefViewModel
+import com.curso.android.module5.aichef.util.ShareUtils
 
 /**
  * =============================================================================
@@ -156,6 +159,8 @@ fun RecipeDetailScreen(
         }
     }
 
+    val context = LocalContext.current // contexto para compartir
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -173,6 +178,25 @@ fun RecipeDetailScreen(
                         )
                     }
                 },
+                //New Section
+                actions = {
+                    // Solo mostramos el botón si la receta cargó correctamente
+                    if (recipe != null) {
+                        IconButton(
+                            onClick = {
+                                // Llamamos a nuestra función visual
+                                // Pasamos null a la imagen por ahora para que solo comparta el texto con el diseño.
+                                ShareUtils.shareRecipe(context, recipe, null)
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Share,
+                                contentDescription = "Compartir receta"
+                            )
+                        }
+                    }
+                },
+
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
