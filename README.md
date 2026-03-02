@@ -156,4 +156,4 @@ app/src/main/java/com/curso/android/module5/aichef/
 Desarrollado como parte del  
 **Módulo 5 — Firebase AI Logic & Arquitectura en la Nube**
 
-Link al video explicativo: 
+Link al video explicativo: https://youtube.com/shorts/o0jZpzed_lI?feature=share
